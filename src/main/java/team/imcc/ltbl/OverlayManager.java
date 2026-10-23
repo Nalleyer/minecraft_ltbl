@@ -64,7 +64,7 @@ public final class OverlayManager {
 		}
 
 		LtblConfig config = LtblConfig.get();
-		ParticleOptions particle = ParticleStyle.parse(config.particle).particle();
+		ParticleOptions defaultParticle = ParticleStyle.parse(config.particle).particle();
 		Iterator<Map.Entry<UUID, Session>> iterator = SESSIONS.entrySet().iterator();
 
 		while (iterator.hasNext()) {
@@ -77,7 +77,7 @@ public final class OverlayManager {
 			}
 
 			try {
-				entry.getValue().tick(player, config, particle);
+				entry.getValue().tick(player, config, defaultParticle);
 			} catch (RuntimeException e) {
 				// Never let one broken overlay take the server tick loop down with it.
 				iterator.remove();
@@ -91,6 +91,8 @@ public final class OverlayManager {
 		private int radius = 32;
 		/** -1 means "use the dimension's own spawn light limit". */
 		private int lightLimit = -1;
+		/** null means "use the particle from the config file". */
+		private ParticleStyle style;
 		private int anchorX;
 		private int anchorY;
 		private int anchorZ;
@@ -113,6 +115,14 @@ public final class OverlayManager {
 
 		int lightLimit() {
 			return lightLimit;
+		}
+
+		ParticleStyle style() {
+			return style;
+		}
+
+		void setStyle(ParticleStyle newStyle) {
+			style = newStyle;
 		}
 
 		void setRadius(ServerPlayer player, int newRadius) {
@@ -155,7 +165,8 @@ public final class OverlayManager {
 			cursor = 0;
 		}
 
-		void tick(ServerPlayer player, LtblConfig config, ParticleOptions particle) {
+		void tick(ServerPlayer player, LtblConfig config, ParticleOptions defaultParticle) {
+			ParticleOptions particle = style != null ? style.particle() : defaultParticle;
 			ServerLevel level = player.level();
 			int dx = player.getBlockX() - anchorX;
 			int dz = player.getBlockZ() - anchorZ;

@@ -2,6 +2,7 @@ package team.imcc.ltbl;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -24,7 +25,17 @@ public final class LtblCommand {
 				.then(Commands.literal("light")
 						.then(Commands.literal("auto").executes(context -> setLight(context.getSource(), -1)))
 						.then(Commands.argument("level", IntegerArgumentType.integer(0, 15))
-								.executes(context -> setLight(context.getSource(), IntegerArgumentType.getInteger(context, "level"))))));
+								.executes(context -> setLight(context.getSource(), IntegerArgumentType.getInteger(context, "level")))))
+				.then(Commands.literal("particle")
+						.executes(context -> showParticle(context.getSource()))
+						.then(Commands.argument("name", StringArgumentType.word())
+								.suggests((context, builder) -> {
+									for (ParticleStyle style : ParticleStyle.values()) {
+										builder.suggest(style.id());
+									}
+									return builder.buildFuture();
+								})
+								.executes(context -> setParticle(context.getSource(), StringArgumentType.getString(context, "name"))))));
 	}
 
 	private static int toggle(CommandSourceStack source) {
@@ -104,6 +115,54 @@ public final class LtblCommand {
 		return 1;
 	}
 
+	private static int showParticle(CommandSourceStack source) {
+		ServerPlayer player = source.getPlayer();
+		if (player == null) {
+			return notAPlayer(source);
+		}
+		OverlayManager.Session session = OverlayManager.session(player.getUUID());
+		if (session == null) {
+			return notEnabled(source);
+		}
+		source.sendSuccess(() -> Component.literal("§aLTBL 粒子：" + currentParticle(session)
+				+ " §7可选§r " + particleIds()), false);
+		return 1;
+	}
+
+	private static int setParticle(CommandSourceStack source, String name) {
+		ServerPlayer player = source.getPlayer();
+		if (player == null) {
+			return notAPlayer(source);
+		}
+		OverlayManager.Session session = OverlayManager.session(player.getUUID());
+		if (session == null) {
+			return notEnabled(source);
+		}
+		ParticleStyle style = ParticleStyle.byId(name);
+		if (style == null) {
+			source.sendFailure(Component.literal("LTBL：未知粒子 " + name + "，可选 " + particleIds()));
+			return 0;
+		}
+		session.setStyle(style);
+		source.sendSuccess(() -> Component.literal("§aLTBL 粒子：" + style.id()), false);
+		return 1;
+	}
+
+	private static String currentParticle(OverlayManager.Session session) {
+		return session.style() != null ? session.style().id() : LtblConfig.get().particle + "(默认)";
+	}
+
+	private static String particleIds() {
+		StringBuilder builder = new StringBuilder();
+		for (ParticleStyle style : ParticleStyle.values()) {
+			if (builder.length() > 0) {
+				builder.append(' ');
+			}
+			builder.append(style.id());
+		}
+		return builder.toString();
+	}
+
 	public static String describe(String prefix, ServerPlayer player) {
 		OverlayManager.Session session = OverlayManager.session(player.getUUID());
 		if (session == null) {
@@ -112,7 +171,7 @@ public final class LtblCommand {
 		return prefix
 				+ " §7|§r 半径 " + session.radius()
 				+ " §7|§r 光照 " + describeLight(player, session)
-				+ " §7|§r 粒子 " + LtblConfig.get().particle
+				+ " §7|§r 粒子 " + currentParticle(session)
 				+ " §7|§r 一圈 " + session.cycleSeconds() + "s";
 	}
 

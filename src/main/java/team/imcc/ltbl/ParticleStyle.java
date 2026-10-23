@@ -29,6 +29,12 @@ public enum ParticleStyle {
 	}
 
 	public static ParticleStyle parse(String name) {
+		ParticleStyle style = byId(name);
+		return style != null ? style : END_ROD;
+	}
+
+	/** Strict lookup for user input; null when the name is unknown. */
+	public static ParticleStyle byId(String name) {
 		if (name != null) {
 			for (ParticleStyle style : values()) {
 				if (style.id.equalsIgnoreCase(name)) {
@@ -36,6 +42,6 @@ public enum ParticleStyle {
 				}
 			}
 		}
-		return END_ROD;
+		return null;
 	}
 }

@@ -44,6 +44,7 @@ export JAVA_HOME="$HOME/.jdks/jdk-25.0.4.1+1"
 | `/ltbl status` | 查看当前半径、光照阈值、粒子、扫描一圈所需时间 |
 | `/ltbl radius <8-64>` | 改自己的扫描半径（默认 32 格，跟随玩家移动） |
 | `/ltbl light <0-15>` | 改自己的光照阈值；`/ltbl light auto` 恢复按维度自动判定 |
+| `/ltbl particle <名字>` | 改自己的粒子样式，见下表；不带参数查看当前值和可选列表 |
 
 阈值自动值时取自维度数据包：
 
@@ -55,6 +56,15 @@ export JAVA_HOME="$HOME/.jdks/jdk-25.0.4.1+1"
 
 算法是 `min(monster_spawn_block_light_limit, monster_spawn_light_level 的最大值)`，所以改了数据包、
 换了维度类型，阈值也会跟着变。
+
+粒子样式（`/ltbl particle` 或配置里的 `particle`）：
+
+| 名字 | 观感 | 暗处可见性 |
+| --- | --- | --- |
+| `end_rod` | 白色小球 | 满亮（客户端对 `END_ROD` 硬编码 `0xF000F0`），黑洞穴里也清楚 |
+| `glow` | 小圆点 | 随生命周期提亮，暗处一般 |
+| `flame` | 橙色火苗，会向上飘 | 按世界光照渲染，暗处偏暗 |
+| `barrier` | 屏障方块图标，最接近旧版 | 按世界光照渲染，黑处基本看不见 |
 
 ## 配置文件
 
@@ -76,7 +86,7 @@ export JAVA_HOME="$HOME/.jdks/jdk-25.0.4.1+1"
 | `sectionsPerTick` | 每 tick 扫描几个 16×16×16 区块段。越大刷新越快、开销越高 |
 | `maxParticlesPerTick` | 每 tick 最多为单个玩家发多少个粒子包，防止大面积黑暗时刷屏 |
 | `particleViewDistance` | 只标记眼睛 24 格内的方块（客户端粒子上限 32 格） |
-| `particle` | `end_rod`（默认，暗处也亮）、`glow`、`flame`、`barrier`（屏障方块图标） |
+| `particle` | `end_rod`（默认，暗处也亮）、`glow`、`flame`、`barrier`（屏障方块图标，注意它按世界光照渲染，黑处会偏暗） |
 
 ## 工作原理与开销
 
