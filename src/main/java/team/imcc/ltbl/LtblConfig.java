@@ -32,8 +32,8 @@ public final class LtblConfig {
 	public int maxParticlesPerTick = 400;
 	/** Only mark blocks within this distance from the player's eyes. */
 	public double particleViewDistance = 24.0;
-	/** end_rod, glow, flame or barrier. */
-	public String particle = "end_rod";
+	/** barrier, end_rod, glow or flame. */
+	public String particle = "barrier";
 
 	public static LtblConfig get() {
 		return instance == null ? (instance = new LtblConfig()) : instance;

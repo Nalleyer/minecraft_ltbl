@@ -59,12 +59,12 @@ export JAVA_HOME="$HOME/.jdks/jdk-25.0.4.1+1"
 
 粒子样式（`/ltbl particle` 或配置里的 `particle`）：
 
-| 名字 | 观感 | 暗处可见性 |
-| --- | --- | --- |
-| `end_rod` | 白色小球 | 满亮（客户端对 `END_ROD` 硬编码 `0xF000F0`），黑洞穴里也清楚 |
-| `glow` | 小圆点 | 随生命周期提亮，暗处一般 |
-| `flame` | 橙色火苗，会向上飘 | 按世界光照渲染，暗处偏暗 |
-| `barrier` | 屏障方块图标，最接近旧版 | 按世界光照渲染，黑处基本看不见 |
+| 名字 | 观感 |
+| --- | --- |
+| `barrier`（默认） | 屏障方块图标，最接近旧版；按世界光照渲染，但图标对比度高，实测暗处也看得清 |
+| `end_rod` | 白色小球；客户端对 `END_ROD` 硬编码 `0xF000F0`，暗处可见性最保险 |
+| `glow` | 小圆点，随生命周期提亮 |
+| `flame` | 橙色火苗，会向上飘 |
 
 ## 配置文件
 
@@ -76,7 +76,7 @@ export JAVA_HOME="$HOME/.jdks/jdk-25.0.4.1+1"
   "sectionsPerTick": 2,
   "maxParticlesPerTick": 400,
   "particleViewDistance": 24.0,
-  "particle": "end_rod"
+  "particle": "barrier"
 }
 ```
 
@@ -86,7 +86,7 @@ export JAVA_HOME="$HOME/.jdks/jdk-25.0.4.1+1"
 | `sectionsPerTick` | 每 tick 扫描几个 16×16×16 区块段。越大刷新越快、开销越高 |
 | `maxParticlesPerTick` | 每 tick 最多为单个玩家发多少个粒子包，防止大面积黑暗时刷屏 |
 | `particleViewDistance` | 只标记眼睛 24 格内的方块（客户端粒子上限 32 格） |
-| `particle` | `end_rod`（默认，暗处也亮）、`glow`、`flame`、`barrier`（屏障方块图标，注意它按世界光照渲染，黑处会偏暗） |
+| `particle` | `barrier`（默认，屏障图标）、`end_rod`、`glow`、`flame` |
 
 ## 工作原理与开销
 
@@ -107,7 +107,7 @@ export JAVA_HOME="$HOME/.jdks/jdk-25.0.4.1+1"
 | 扫描线程 | 异步任务（跨线程读世界） | 服务端主线程，分段摊平 |
 | 光照阈值 | 固定 ≤7 | 按维度自动判定，可指令覆盖 |
 | 维度 | 只支持主世界 | 主世界 / 下界 / 末地 |
-| 粒子 | `Particle.BARRIER` | `end_rod` 等，可配置（26.3 已无 `barrier` 粒子） |
+| 粒子 | `Particle.BARRIER` | `barrier`（`BLOCK_MARKER` 模拟），另有 `end_rod`/`glow`/`flame` 可选 |
 | 大范围黑暗 | 每圈可能一次发几千个包 | 每 tick 限量，按区块段分批 |
 | 生物群系 / 方块黑名单 | 手写几百个方块类型 | 用碰撞体积 / 完整面判定，随版本自动适配 |
 
