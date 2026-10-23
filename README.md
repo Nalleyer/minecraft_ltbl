@@ -8,28 +8,28 @@
 
 ## 构建
 
-需要 JDK 25（模组按 Java 25 目标编译）；本机默认 `java` 是 21，构建前先指过去：
+需要 JDK 25（`build.gradle` 里按 Java 25 编译）；构建前确认 `JAVA_HOME` 指向 JDK 25：
 
 ```powershell
-set JAVA_HOME=%USERPROFILE%\.jdks\jdk-25.0.4.1+1
+set JAVA_HOME=C:\path\to\jdk-25
 gradlew.bat build
 # 产物：build/libs/ltbl-2.0.0+26.3.jar
 ```
 
 ```bash
 # git-bash / WSL
-export JAVA_HOME="$HOME/.jdks/jdk-25.0.4.1+1"
+export JAVA_HOME=/path/to/jdk-25
 ./gradlew build
 ```
 
 首次构建会下载 Gradle、Fabric Loom 和 Minecraft 26.3 的依赖。Loom 1.18 起使用 Mojang 官方映射，
-不再需要 yarn mappings。构建脚本里给 Gradle 的 JVM 加了
-`-Djdk.tls.namedGroups=x25519,secp256r1,secp384r1`——本机 JDK 25 默认带 ML-KEM 混合密钥交换，
-在部分代理/网络环境下 `maven.fabricmc.net` 会直接断开 TLS 握手，关掉它即可。
+不再需要 yarn mappings。构建脚本给 Gradle 的 JVM 加了
+`-Djdk.tls.namedGroups=x25519,secp256r1,secp384r1`：JDK 25 默认启用 ML-KEM 混合密钥交换，
+在部分代理或网络环境下请求 `maven.fabricmc.net` 会直接断开 TLS 握手，关掉它即可。
 
 ## 安装
 
-1. 服务器需要 Fabric Loader 0.19.5+ 和 **Fabric API**（本服已装 `fabric-api-0.164.0+26.3`）。
+1. 服务器需要 Fabric Loader 0.19.5+ 和 **Fabric API**（26.3 对应 `0.164.x`，以 [Fabric 官网](https://fabricmc.net/develop) 列出的版本为准）。
 2. 把 `ltbl-*.jar` 放进服务端 `mods/` 目录，重启服务器。
 3. 模组是 `"environment": "server"`，只在服务端运行；纯原版客户端即可看到粒子，不需要装任何东西。
 
@@ -61,14 +61,14 @@ export JAVA_HOME="$HOME/.jdks/jdk-25.0.4.1+1"
 
 | 名字 | 观感 |
 | --- | --- |
-| `barrier`（默认） | 屏障方块图标，最接近旧版；按世界光照渲染，但图标对比度高，实测暗处也看得清 |
+| `barrier`（默认） | 屏障方块图标，最接近旧版；按世界光照渲染，但图标对比度高，无光处也能辨认 |
 | `end_rod` | 白色小球；客户端对 `END_ROD` 硬编码 `0xF000F0`，暗处可见性最保险 |
 | `glow` | 小圆点，随生命周期提亮 |
 | `flame` | 橙色火苗，会向上飘 |
 
 ## 配置文件
 
-首次启动生成 `config/ltbl.json`（相对服务端运行目录，本服即 `data/config/ltbl.json`）：
+首次启动在服务端运行目录下生成 `config/ltbl.json`（容器部署时通常位于挂载的数据目录里）：
 
 ```json
 {
@@ -94,8 +94,8 @@ export JAVA_HOME="$HOME/.jdks/jdk-25.0.4.1+1"
   发粒子，所以画面是从玩家身边一圈圈铺开的，不会整块跳变。
 - 完全跑在服务端主线程（原 Bukkit 版用的是异步任务，`getBlockAt` 跨线程访问世界并不安全）。
 - 只读已加载的区块（`getChunkNow`），不会为了显示强制加载 / 生成区块；没加载的区域不显示。
-- 实测（26.3 专用服、25 个区块全部加载、半径 32）：一整圈约 **15 ms** CPU，摊到 62 tick 上约
-  0.25 ms/tick/玩家；空载 `tick query` 平均 0.2–0.5 ms。
+- 参考开销（26.3 专用服务器、半径 32、约 25 个已加载区块）：一整圈约 **15 ms** CPU，按默认
+  `sectionsPerTick=2` 摊到 62 tick 上约 0.25 ms/tick/玩家；洞穴密集区候选方块更多，大致同量级。
 - 出生点刷怪判定简化自原版 `Monster.isDarkEnoughToSpawn`：可站立（无碰撞体积、无流体）+ 脚下
   是完整上表面 + 头顶有 2 格空间 + 方块光照不超过阈值。蘑菇岛不标记。
 
